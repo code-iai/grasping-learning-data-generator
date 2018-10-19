@@ -3,7 +3,7 @@ import sys
 from os import listdir
 from os.path import isdir, join
 
-_cram_to_word_net_object_ = {'BOWL':'bowl.n.01'}
+_cram_to_word_net_object_ = {'BOWL':'bowl.n.01', 'CUP': 'cup.n.01'}
 
 __FACING_ROBOT_FACE__ = 'facing_robot_face'
 __BOTTOM_FACE__ = 'bottom_face'
