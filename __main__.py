@@ -1,7 +1,10 @@
+from high_level_markov_logic_network.fuzzy_markov_logic_network.is_a_generator import get_is_a_ground_atom
+from high_level_markov_logic_network.ground_atom import GroundAtom
 import pandas as pd
 import sys
 from os import listdir
 from os.path import isdir, join
+
 
 _cram_to_word_net_object_ = {'BOWL':'bowl.n.01', 'CUP': 'cup.n.01'}
 
@@ -43,35 +46,27 @@ def get_grasping_type_learning_data(neem_path):
     return grasping_type_learning_data
 
 
-def get_grasp_atom_with_truth_value(grasp, success):
-    truth_value = 1.0 if success else 0.0
-
-    return '{} {}({})\n'.format(truth_value, __GRASP_TYPE__, grasp)
-
-
-def get_object_to_be_grasped_atom(object_type):
-    return '1.0 {}({})\n'.format(__OBJ_TO_BE_GRASPED__, _cram_to_word_net_object_.get(object_type, 'object.n.01'))
-
-def get_is_a_atom(object_type):
-    return '1.0 {0}({1},{1})\n'.format(__IS_A__, _cram_to_word_net_object_.get(object_type, 'object.n.01'))
-
-
-def get_facing_robot_face_atom(facing_robot_face):
-    return '1.0 {}({})\n'.format(__FACING_ROBOT_FACE__, facing_robot_face)
-
-
-def get_bottom_face_atom(bottom_face):
-    return '1.0 {}({})\n'.format(__BOTTOM_FACE__, bottom_face)
-
-
 def transform_grasping_type_data_point_into_mln_database(data_point):
-    mln_database = get_grasp_atom_with_truth_value(data_point['grasp'], data_point['success'])
-    mln_database += get_object_to_be_grasped_atom(data_point['object_type'])
-    mln_database += get_is_a_atom(data_point['object_type'])
-    mln_database += get_facing_robot_face_atom(data_point['facing_robot_face'])
-    mln_database += get_bottom_face_atom(data_point['bottom_face'])
+    word_net_concept = _cram_to_word_net_object_.get(data_point['object_type'], 'object.n.01')
 
-    return mln_database
+    grasp_type_ground_atom = GroundAtom(__GRASP_TYPE__, [data_point['grasp']], float(data_point['success']))
+    object_to_be_grasped_ground_atom = GroundAtom(__OBJ_TO_BE_GRASPED__, [word_net_concept])
+    is_ground_atom = get_is_a_ground_atom(word_net_concept, word_net_concept)
+    facing_robot_face_ground_atom = GroundAtom(__FACING_ROBOT_FACE__, [data_point['facing_robot_face']])
+    bottom_face_ground_atom = GroundAtom(__BOTTOM_FACE__, [data_point['bottom_face']])
+
+    train_database_file_content = \
+        [transform_ground_atom_to_text(grasp_type_ground_atom),
+         transform_ground_atom_to_text(object_to_be_grasped_ground_atom),
+         transform_ground_atom_to_text(is_ground_atom),
+         transform_ground_atom_to_text(facing_robot_face_ground_atom),
+         transform_ground_atom_to_text(bottom_face_ground_atom)]
+
+    return '\n'.join(train_database_file_content)
+
+
+def transform_ground_atom_to_text(ground_atom):
+    return '{} {}'.format(ground_atom.truth_value, ground_atom)
 
 
 def transform_neem_to_mln_databases(neem_path, result_path):
@@ -81,7 +76,7 @@ def transform_neem_to_mln_databases(neem_path, result_path):
     for _, data_point in grasping_type_learning_data.iterrows():
         mln_databases.append(transform_grasping_type_data_point_into_mln_database(data_point))
 
-    training_file = '---\n'.join(mln_databases)
+    training_file = '\n---\n'.join(mln_databases)
 
     with open(join(result_path, 'train.db'), 'w') as f:
         f.write(training_file)
