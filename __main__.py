@@ -1,3 +1,5 @@
+import tf.transformations as tf
+
 from high_level_markov_logic_network.fuzzy_markov_logic_network.is_a_generator import get_is_a_ground_atom
 from high_level_markov_logic_network.ground_atom import GroundAtom
 import pandas as pd
@@ -14,6 +16,34 @@ __OBJ_TO_BE_GRASPED__ = 'obj_to_be_grasped'
 __IS_ROTATIONALLY_SYMMETRIC__ = 'is_rotationally_symmetric'
 __IS_A__ = 'is_a'
 __GRASP_TYPE__ = 'grasp_type'
+
+
+def get_grasping_position_learning_data(neem_path, result_path):
+    narrative_path = join(neem_path, 'narrative.csv')
+    narrative = pd.read_csv(narrative_path, sep=';')
+
+    reasoning_tasks_path = join(neem_path, 'reasoning_tasks.csv')
+    reasoning_tasks = pd.read_csv(reasoning_tasks_path, sep=';')
+
+    poses_path = join(neem_path, 'poses.csv')
+    poses = pd.read_csv(poses_path, sep=';')
+
+    object_faces_queries = reasoning_tasks.loc[reasoning_tasks['predicate'] == 'calculate-object-faces']
+    grasping_tasks = pd.merge(narrative, object_faces_queries, left_on='id', right_on='action_id')
+    grasping_tasks = pd.merge(grasping_tasks, poses, left_on='id_y', right_on='reasoning_task_id')
+
+    grasping_tasks = grasping_tasks[['grasp', 'object_type', 'success', 't_x', 't_y', 't_z', 'failure', 'arm']]
+
+
+    grasping_tasks = grasping_tasks.drop(grasping_tasks[grasping_tasks['failure'] == 'CRAM-COMMON-FAILURES:MANIPULATION-GOAL-IN-COLLISION'].index)
+
+    object_type = grasping_tasks['object_type'].unique()[0]
+
+    for grasping_type in grasping_tasks['grasp'].unique():
+        for arm in grasping_tasks['arm'].unique():
+            grasping_type_based_grasping_tasks = grasping_tasks.loc[(grasping_tasks['grasp'] == grasping_type) & (grasping_tasks['arm'] == arm)]
+            grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(join(result_path, '{}_{}_{}.csv'.format(object_type, grasping_type, arm)),index=False)
+
 
 
 def get_grasping_type_learning_data(neem_path):
@@ -88,11 +118,15 @@ if __name__ == "__main__":
     result_dir_path = args[1]
 
     if isdir(path):
-        for neem_name in listdir(path):
-            neem_path = join(path, neem_name)
-            if isdir(neem_path):
-                transform_neem_to_mln_databases(neem_path, result_dir_path)
-            else:
-                print transform_neem_to_mln_databases(path, result_dir_path)
+        get_grasping_position_learning_data(path, result_dir_path)
+        transform_neem_to_mln_databases(path, result_dir_path)
+        # for neem_name in listdir(path):
+        #     neem_path = join(path, neem_name)
+        #     if isdir(neem_path):
+        #         get_grasping_position_learning_data(neem_path)
+        #         transform_neem_to_mln_databases(neem_path, result_dir_path)
+        #     else:
+        #         get_grasping_position_learning_data(neem_path)
+        #         transform_neem_to_mln_databases(path, result_dir_path)
     else:
         print 'A directory we the stored information is required'
