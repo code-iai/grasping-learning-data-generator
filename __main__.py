@@ -32,18 +32,37 @@ def get_grasping_position_learning_data(neem_path, result_path):
     grasping_tasks = pd.merge(narrative, object_faces_queries, left_on='id', right_on='action_id')
     grasping_tasks = pd.merge(grasping_tasks, poses, left_on='id_y', right_on='reasoning_task_id')
 
-    grasping_tasks = grasping_tasks[['grasp', 'object_type', 'success', 't_x', 't_y', 't_z', 'failure', 'arm']]
+    robot_coordinate_data = {'t_x': [], 't_y': [], 't_z': []}
 
+    for _, row in grasping_tasks[['t_x', 't_y', 't_z', 'q_x', 'q_y', 'q_z', 'q_w']].iterrows():
+        translation = [row['t_x'], row['t_y'], row['t_z']]
+        quaternion = [row['q_x'], row['q_y'], row['q_z'], row['q_w']]
+        robot_coordinate = transform_object_frame_to_robot_frame(translation, quaternion)
+        new_translation = tf.translation_from_matrix(robot_coordinate)
+        robot_coordinate_data['t_x'].append(new_translation[0])
+        robot_coordinate_data['t_y'].append(new_translation[1])
+        robot_coordinate_data['t_z'].append(new_translation[2])
 
+    grasping_tasks = grasping_tasks[['grasp', 'object_type', 'success', 'failure', 'arm']]
+    grasping_tasks['t_x'] = pd.Series(robot_coordinate_data['t_x'], index=grasping_tasks.index)
+    grasping_tasks['t_y'] = pd.Series(robot_coordinate_data['t_y'], index=grasping_tasks.index)
+    grasping_tasks['t_z'] = pd.Series(robot_coordinate_data['t_z'], index=grasping_tasks.index)
     grasping_tasks = grasping_tasks.drop(grasping_tasks[grasping_tasks['failure'] == 'CRAM-COMMON-FAILURES:MANIPULATION-GOAL-IN-COLLISION'].index)
 
     object_type = grasping_tasks['object_type'].unique()[0]
+
 
     for grasping_type in grasping_tasks['grasp'].unique():
         for arm in grasping_tasks['arm'].unique():
             grasping_type_based_grasping_tasks = grasping_tasks.loc[(grasping_tasks['grasp'] == grasping_type) & (grasping_tasks['arm'] == arm)]
             grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(join(result_path, '{}_{}_{}.csv'.format(object_type, grasping_type, arm)),index=False)
 
+def transform_object_frame_to_robot_frame(translation, quaternion):
+    translation_matrix = tf.translation_matrix(translation)
+    quaternion_matrix = tf.quaternion_matrix(quaternion)
+    transform_matrix = tf.concatenate_matrices(translation_matrix, quaternion_matrix)
+
+    return tf.inverse_matrix(transform_matrix)
 
 
 def get_grasping_type_learning_data(neem_path):
