@@ -18,7 +18,7 @@ __IS_A__ = 'is_a'
 __GRASP_TYPE__ = 'grasp_type'
 
 
-def get_grasping_position_learning_data(neem_path, result_path):
+def get_grasping_position_learning_data(neem_path):
     narrative_path = join(neem_path, 'narrative.csv')
     narrative = pd.read_csv(narrative_path, sep=';')
 
@@ -49,13 +49,7 @@ def get_grasping_position_learning_data(neem_path, result_path):
     grasping_tasks['t_z'] = pd.Series(robot_coordinate_data['t_z'], index=grasping_tasks.index)
     grasping_tasks = grasping_tasks.drop(grasping_tasks[grasping_tasks['failure'] == 'CRAM-COMMON-FAILURES:MANIPULATION-GOAL-IN-COLLISION'].index)
 
-    object_type = grasping_tasks['object_type'].unique()[0]
-
-
-    for grasping_type in grasping_tasks['grasp'].unique():
-        for arm in grasping_tasks['arm'].unique():
-            grasping_type_based_grasping_tasks = grasping_tasks.loc[(grasping_tasks['grasp'] == grasping_type) & (grasping_tasks['arm'] == arm)]
-            grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(join(result_path, '{}_{}_{}.csv'.format(object_type, grasping_type, arm)),index=False)
+    return grasping_tasks
 
 def transform_object_frame_to_robot_frame(translation, quaternion):
     translation_matrix = tf.translation_matrix(translation)
@@ -137,8 +131,26 @@ if __name__ == "__main__":
     result_dir_path = args[1]
 
     if isdir(path):
-        get_grasping_position_learning_data(path, result_dir_path)
-        transform_neem_to_mln_databases(path, result_dir_path)
+        csv_data_frame = pd.DataFrame()
+        is_narrative_collection = False
+
+        for experiment_file in listdir(path):
+            experiment_path = join(path, experiment_file)
+            if is_narrative_collection or isdir(experiment_path):
+                is_narrative_collection = True
+                csv_data_frame = csv_data_frame.append(get_grasping_position_learning_data(experiment_path))
+
+                transform_neem_to_mln_databases(experiment_path, result_dir_path)
+            elif not is_narrative_collection:
+                csv_data_frame.append(get_grasping_position_learning_data(path))
+
+        object_type = csv_data_frame['object_type'].unique()[0]
+
+        for grasping_type in csv_data_frame['grasp'].unique():
+            for arm in csv_data_frame['arm'].unique():
+                grasping_type_based_grasping_tasks = csv_data_frame.loc[(csv_data_frame['grasp'] == grasping_type) & (csv_data_frame['arm'] == arm)]
+                grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(join(result_dir_path, '{}_{}_{}.csv'.format(object_type, grasping_type, arm)),index=False)
+
         # for neem_name in listdir(path):
         #     neem_path = join(path, neem_name)
         #     if isdir(neem_path):
