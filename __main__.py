@@ -43,7 +43,7 @@ def get_grasping_position_learning_data(neem_path):
         robot_coordinate_data['t_y'].append(new_translation[1])
         robot_coordinate_data['t_z'].append(new_translation[2])
 
-    grasping_tasks = grasping_tasks[['grasp', 'object_type', 'success', 'failure', 'arm']]
+    grasping_tasks = grasping_tasks[['grasp', 'object_type', 'success', 'failure', 'arm', 'result']]
     grasping_tasks['t_x'] = pd.Series(robot_coordinate_data['t_x'], index=grasping_tasks.index)
     grasping_tasks['t_y'] = pd.Series(robot_coordinate_data['t_y'], index=grasping_tasks.index)
     grasping_tasks['t_z'] = pd.Series(robot_coordinate_data['t_z'], index=grasping_tasks.index)
@@ -148,8 +148,12 @@ if __name__ == "__main__":
 
         for grasping_type in csv_data_frame['grasp'].unique():
             for arm in csv_data_frame['arm'].unique():
-                grasping_type_based_grasping_tasks = csv_data_frame.loc[(csv_data_frame['grasp'] == grasping_type) & (csv_data_frame['arm'] == arm)]
-                grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(join(result_dir_path, '{}_{}_{}.csv'.format(object_type, grasping_type, arm)),index=False)
+                for faces in csv_data_frame['result'].unique():
+                    grasping_type_based_grasping_tasks = csv_data_frame.loc[
+                        (csv_data_frame['grasp'] == grasping_type) &
+                        (csv_data_frame['arm'] == arm) &
+                        (csv_data_frame['result'] == faces)]
+                    grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(join(result_dir_path, '{}-{}-{}-{}.csv'.format(object_type, grasping_type,faces, arm)),index=False)
 
         # for neem_name in listdir(path):
         #     neem_path = join(path, neem_name)
