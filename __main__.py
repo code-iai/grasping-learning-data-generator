@@ -145,7 +145,8 @@ if __name__ == "__main__":
                 csv_data_frame.append(get_grasping_position_learning_data(path))
 
         object_type = csv_data_frame['object_type'].unique()[0]
-
+        object_type = _cram_to_word_net_object_.get(object_type,object_type)
+        
         for grasping_type in csv_data_frame['grasp'].unique():
             for arm in csv_data_frame['arm'].unique():
                 for faces in csv_data_frame['result'].unique():
@@ -153,7 +154,8 @@ if __name__ == "__main__":
                         (csv_data_frame['grasp'] == grasping_type) &
                         (csv_data_frame['arm'] == arm) &
                         (csv_data_frame['result'] == faces)]
-                    grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(join(result_dir_path, '{}-{}-{}-{}.csv'.format(object_type, grasping_type,faces, arm)),index=False)
+                    grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(
+                        join(result_dir_path, '{},{},{},{}.csv'.format(object_type, grasping_type,faces, arm)),index=False)
 
         # for neem_name in listdir(path):
         #     neem_path = join(path, neem_name)
