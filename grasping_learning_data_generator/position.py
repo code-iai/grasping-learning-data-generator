@@ -1,7 +1,17 @@
+from os import listdir
 from os.path import join
 import pandas as pd
 import tf.transformations as tf
 
+def get_learning_data_from_neems(neems_path):
+    learning_data_frame = pd.DataFrame()
+
+    #neems_path/neem_name/*.csv
+    for neem_folder in listdir(neems_path):
+        neem_path = join(neems_path, neem_folder)
+        learning_data_frame = learning_data_frame.append(get_grasping_position_learning_data(neem_path))
+
+    return learning_data_frame
 
 def get_grasping_position_learning_data(neem_path):
     narrative_path = join(neem_path, 'narrative.csv')
