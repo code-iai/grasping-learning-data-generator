@@ -8,7 +8,7 @@ from os import listdir
 from os.path import isdir, join
 
 
-_cram_to_word_net_object_ = {'BOWL':'bowl.n.01', 'CUP': 'cup.n.01'}
+_cram_to_word_net_object_ = {'BOWL':'bowl.n.01', 'CUP': 'cup.n.01', 'SPOON' : 'spoon.n.01'}
 
 __FACING_ROBOT_FACE__ = 'facing_robot_face'
 __BOTTOM_FACE__ = 'bottom_face'
@@ -32,6 +32,8 @@ def get_grasping_position_learning_data(neem_path):
     grasping_tasks = pd.merge(narrative, object_faces_queries, left_on='id', right_on='action_id')
     grasping_tasks = pd.merge(grasping_tasks, poses, left_on='id_y', right_on='reasoning_task_id')
 
+
+
     robot_coordinate_data = {'t_x': [], 't_y': [], 't_z': []}
 
     for _, row in grasping_tasks[['t_x', 't_y', 't_z', 'q_x', 'q_y', 'q_z', 'q_w']].iterrows():
@@ -47,8 +49,15 @@ def get_grasping_position_learning_data(neem_path):
     grasping_tasks['t_x'] = pd.Series(robot_coordinate_data['t_x'], index=grasping_tasks.index)
     grasping_tasks['t_y'] = pd.Series(robot_coordinate_data['t_y'], index=grasping_tasks.index)
     grasping_tasks['t_z'] = pd.Series(robot_coordinate_data['t_z'], index=grasping_tasks.index)
-    grasping_tasks = grasping_tasks.drop(grasping_tasks[grasping_tasks['failure'] == 'CRAM-COMMON-FAILURES:MANIPULATION-GOAL-IN-COLLISION'].index)
 
+    if grasping_tasks['failure'].dtype != 'float64':
+        grasping_tasks = grasping_tasks.drop(grasping_tasks[grasping_tasks['failure'] == 'CRAM-COMMON-FAILURES:MANIPULATION-GOAL-IN-COLLISION'].index)
+
+    grasping_tasks = grasping_tasks.dropna(axis=0, subset=['arm'])
+    grasping_tasks = grasping_tasks.dropna(axis=0, subset=['grasp'])
+    grasping_tasks = grasping_tasks.dropna(axis=0, subset=['result'])
+
+    print grasping_tasks
     return grasping_tasks
 
 def transform_object_frame_to_robot_frame(translation, quaternion):
@@ -70,7 +79,7 @@ def get_grasping_type_learning_data(neem_path):
     grasping_tasks = pd.merge(narrative, object_faces_queries, left_on='id', right_on='action_id')
 
     grasping_type_learning_data = grasping_tasks[['grasp', 'result', 'object_type', 'success']]
-
+    grasping_type_learning_data = grasping_type_learning_data.dropna(axis=0, subset=['result'])
     facing_robot_faces = []
     bottom_faces = []
 
@@ -82,9 +91,10 @@ def get_grasping_type_learning_data(neem_path):
         bottom_faces.append(bottom_face)
 
     grasping_type_learning_data['facing_robot_face'] = facing_robot_faces
-    grasping_type_learning_data['bottom_face'] = bottom_face
+    grasping_type_learning_data['bottom_face'] = bottom_faces
 
     grasping_type_learning_data.drop(['result'], axis=1, inplace=True)
+    grasping_type_learning_data = grasping_type_learning_data.dropna(axis=0, subset=['grasp'])
 
     return grasping_type_learning_data
 
@@ -115,13 +125,12 @@ def transform_ground_atom_to_text(ground_atom):
 def transform_neem_to_mln_databases(neem_path, result_path):
     grasping_type_learning_data = get_grasping_type_learning_data(neem_path)
     mln_databases = []
-
     for _, data_point in grasping_type_learning_data.iterrows():
         mln_databases.append(transform_grasping_type_data_point_into_mln_database(data_point))
 
     training_file = '\n---\n'.join(mln_databases)
 
-    with open(join(result_path, 'train.db'), 'w') as f:
+    with open(join(result_path, 'train.db'), 'w+') as f:
         f.write(training_file)
 
 
