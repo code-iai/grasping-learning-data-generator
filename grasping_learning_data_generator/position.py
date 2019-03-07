@@ -2,6 +2,25 @@ from os import listdir
 from os.path import join
 import pandas as pd
 import tf.transformations as tf
+import cram2wordnet
+
+
+def generate_learning_data_from_neems(neems_path, result_dir_path):
+    csv_data_frame = get_learning_data_from_neems(neems_path)
+
+    object_type = csv_data_frame['object_type'].unique()[0]
+    object_type = cram2wordnet.get_word_net_object(object_type)
+
+    for grasping_type in csv_data_frame['grasp'].unique():
+        for arm in csv_data_frame['arm'].unique():
+            for faces in csv_data_frame['result'].unique():
+                grasping_type_based_grasping_tasks = csv_data_frame.loc[
+                    (csv_data_frame['grasp'] == grasping_type) &
+                    (csv_data_frame['arm'] == arm) &
+                    (csv_data_frame['result'] == faces)]
+                grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(
+                    join(result_dir_path, '{},{},{},{}.csv'.format(object_type, grasping_type, faces, arm)),
+                    index=False)
 
 def get_learning_data_from_neems(neems_path):
     learning_data_frame = pd.DataFrame()
