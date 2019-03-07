@@ -1,3 +1,4 @@
+from os import listdir
 from os.path import join
 
 import pandas as pd
@@ -12,6 +13,23 @@ __IS_ROTATIONALLY_SYMMETRIC__ = 'is_rotationally_symmetric'
 __IS_A__ = 'is_a'
 __GRASP_TYPE__ = 'grasp_type'
 
+
+def generate_learning_data_from_neems(neems_path, result_dir_path):
+    for experiment_file in listdir(neems_path):
+        experiment_path = join(neems_path, experiment_file)
+        transform_neem_to_mln_databases(experiment_path, result_dir_path)
+
+
+def transform_neem_to_mln_databases(neem_path, result_path):
+    grasping_type_learning_data = get_grasping_type_learning_data(neem_path)
+    mln_databases = []
+    for _, data_point in grasping_type_learning_data.iterrows():
+        mln_databases.append(transform_grasping_type_data_point_into_mln_database(data_point))
+
+    training_file = '\n---\n'.join(mln_databases)
+
+    with open(join(result_path, 'train.db'), 'w+') as f:
+        f.write(training_file)
 
 def get_grasping_type_learning_data(neem_path):
     narrative_path = join(neem_path, 'narrative.csv')
