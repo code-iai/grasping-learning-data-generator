@@ -1,3 +1,4 @@
+import os
 from os import listdir
 from os.path import join
 import pandas as pd
@@ -20,9 +21,19 @@ def generate_learning_data_from_neems(neems_path, result_dir_path):
                         (csv_data_frame['grasp'] == grasping_type) &
                         (csv_data_frame['arm'] == arm) &
                         (csv_data_frame['result'] == faces)]
-                    grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(
-                        join(result_dir_path, '{},{},{},{}.csv'.format(object_type, grasping_type, faces, arm)),
-                        index=False)
+
+                    csv_file_name = '{},{},{},{}.csv'.format(object_type, grasping_type, faces, arm)
+                    csv_file_path = join(result_dir_path, csv_file_name)
+
+                    if os.path.isfile(csv_file_path):
+                        with open(csv_file_path, 'a') as csv_result_file:
+                            grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(csv_result_file,
+                                                                      header=False,
+                                                                      index=False)
+                    else:
+                        grasping_type_based_grasping_tasks[['t_x', 't_y', 't_z', 'success']].to_csv(
+                            csv_file_path,
+                            index=False)
 
 
 def get_learning_data_from_neems(neems_path):
