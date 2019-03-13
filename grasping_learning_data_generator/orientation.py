@@ -21,15 +21,19 @@ def generate_learning_data_from_neems(neems_path, result_dir_path):
 
 
 def transform_neem_to_mln_databases(neem_path, result_path):
-    grasping_type_learning_data = get_grasping_type_learning_data(neem_path)
-    mln_databases = []
-    for _, data_point in grasping_type_learning_data.iterrows():
-        mln_databases.append(transform_grasping_type_data_point_into_mln_database(data_point))
+    all_grasping_type_learning_data = get_grasping_type_learning_data(neem_path)
+    object_types = all_grasping_type_learning_data['object_type'].unique()
 
-    training_file = '\n---\n'.join(mln_databases)
+    for object_type in object_types:
+        mln_databases = []
+        grasping_type_learning_data = all_grasping_type_learning_data.loc[all_grasping_type_learning_data['object_type'] == object_type]
+        for _, data_point in grasping_type_learning_data.iterrows():
+            mln_databases.append(transform_grasping_type_data_point_into_mln_database(data_point))
 
-    with open(join(result_path, 'train.db'), 'w+') as f:
-        f.write(training_file)
+        training_file = '\n---\n'.join(mln_databases)
+
+        with open(join(result_path, '{}.train.db'.format(object_type)), 'w+') as f:
+            f.write(training_file)
 
 def get_grasping_type_learning_data(neem_path):
     narrative_path = join(neem_path, 'narrative.csv')
