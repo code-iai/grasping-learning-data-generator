@@ -6,10 +6,11 @@ import cram2wordnet
 
 
 def generate_learning_data_from_neems(neems_path, result_dir_path):
-    csv_data_frame = get_learning_data_from_neems(neems_path)
-    object_types = csv_data_frame['object_type'].unique()
+    all_csv_data_frame = get_learning_data_from_neems(neems_path)
+    object_types = all_csv_data_frame['object_type'].unique()
 
     for object_type in object_types:
+        csv_data_frame = all_csv_data_frame.loc[all_csv_data_frame['object_type'] == object_type]
         object_type = cram2wordnet.get_word_net_object(object_type)
 
         for grasping_type in csv_data_frame['grasp'].unique():
