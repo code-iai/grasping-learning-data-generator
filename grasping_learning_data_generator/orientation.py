@@ -1,3 +1,4 @@
+import os
 from os import listdir
 from os.path import join
 
@@ -32,8 +33,16 @@ def transform_neem_to_mln_databases(neem_path, result_path):
 
         training_file = '\n---\n'.join(mln_databases)
 
-        with open(join(result_path, '{}.train.db'.format(object_type)), 'w+') as f:
-            f.write(training_file)
+        mln_file_name = '{}.train.db'.format(object_type)
+        mln_file_path = join(result_path, mln_file_name)
+
+        if os.path.isfile(mln_file_path):
+            with open(mln_file_path, 'a') as f:
+                training_file = '\n---\n' + training_file
+                f.write(training_file)
+        else:
+            with open(mln_file_path, 'w') as f:
+                f.write(training_file)
 
 def get_grasping_type_learning_data(neem_path):
     narrative_path = join(neem_path, 'narrative.csv')
