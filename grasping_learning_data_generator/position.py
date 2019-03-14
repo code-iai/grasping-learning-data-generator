@@ -47,7 +47,7 @@ def get_learning_data_from_neems(neems_path):
     return learning_data_frame
 
 def get_grasping_position_learning_data(neem_path):
-    narrative_path = join(neem_path, 'narrative.csv')
+    narrative_path = join(neem_path, 'actions.csv')
     narrative = pd.read_csv(narrative_path, sep=';')
 
     reasoning_tasks_path = join(neem_path, 'reasoning_tasks.csv')
