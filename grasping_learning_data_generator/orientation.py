@@ -45,7 +45,7 @@ def transform_neem_to_mln_databases(neem_path, result_path):
                 f.write(training_file)
 
 def get_grasping_type_learning_data(neem_path):
-    narrative_path = join(neem_path, 'narrative.csv')
+    narrative_path = join(neem_path, 'actions.csv')
     narrative = pd.read_csv(narrative_path, sep=';')
 
     reasoning_tasks_path = join(neem_path, 'reasoning_tasks.csv')
