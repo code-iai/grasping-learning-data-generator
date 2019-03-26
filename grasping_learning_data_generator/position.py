@@ -2,7 +2,7 @@ import os
 from os import listdir
 from os.path import join
 import pandas as pd
-import tf.transformations as tf
+import transformations as tf
 import cram2wordnet
 
 
