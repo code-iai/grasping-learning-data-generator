@@ -3,3 +3,6 @@
 .idea
 result
 narratives*
+build
+dist
+*egg-info
