@@ -6,6 +6,7 @@ import pandas as pd
 from high_level_markov_logic_network.fuzzy_markov_logic_network.is_a_generator import get_is_a_ground_atom
 from high_level_markov_logic_network.ground_atom import GroundAtom
 import cram2wordnet
+import transformations as tf
 
 __FACING_ROBOT_FACE__ = 'facing_robot_face'
 __BOTTOM_FACE__ = 'bottom_face'
@@ -44,6 +45,7 @@ def transform_neem_to_mln_databases(neem_path, result_path):
             with open(mln_file_path, 'w') as f:
                 f.write(training_file)
 
+
 def get_grasping_type_learning_data(neem_path):
     narrative_path = join(neem_path, 'actions.csv')
     narrative = pd.read_csv(narrative_path, sep=';')
@@ -51,26 +53,51 @@ def get_grasping_type_learning_data(neem_path):
     reasoning_tasks_path = join(neem_path, 'reasoning_tasks.csv')
     reasoning_tasks = pd.read_csv(reasoning_tasks_path, sep=';')
 
-    object_faces_queries = reasoning_tasks.loc[reasoning_tasks['predicate'] == 'calculate-object-faces']
+    poses_path = join(neem_path, 'poses.csv')
+    poses_tasks = pd.read_csv(poses_path, sep=';')
+
+    object_faces_queries = \
+        reasoning_tasks.loc[reasoning_tasks['predicate'] == 'cram-manipulation-interfaces:get-action-grasps']
+
     grasping_tasks = pd.merge(narrative, object_faces_queries, left_on='id', right_on='action_id')
+    grasping_poses = pd.merge(poses_tasks, object_faces_queries, left_on='reasoning_task_id', right_on='id')
+    picking_up_ids = grasping_tasks.get('id_x')
 
-    grasping_type_learning_data = grasping_tasks[['grasp', 'result', 'object_type', 'success']]
-    grasping_type_learning_data = grasping_type_learning_data.dropna(axis=0, subset=['result'])
-    facing_robot_faces = []
-    bottom_faces = []
+    grasping_type_learning_data = pd.DataFrame()
+    for picking_up_id in picking_up_ids:
+        grasping_action = narrative.loc[(narrative['parent'] == picking_up_id) & (narrative['type'] == 'AcquireGraspOfSomething')]
+        grasping_action = grasping_action[['grasp', 'object_type', 'success']]
 
-    for value in grasping_type_learning_data['result']:
-        stripped_value = value.strip()
-        facing_robot_face, bottom_face = stripped_value.split()
+        grasping_pose_features = grasping_poses.loc[(grasping_poses['action_id'] == picking_up_id)]
+        robot_to_object_translation = grasping_pose_features[['t_x', 't_y', 't_z']].iloc[0].tolist()
+        robot_to_object_orientation = grasping_pose_features[['q_x', 'q_y', 'q_z', 'q_w']].iloc[0].tolist()
 
-        facing_robot_faces.append(facing_robot_face)
-        bottom_faces.append(bottom_face)
+        object_to_robot_translation = tf.get_object_robot_transformation(robot_to_object_translation, robot_to_object_orientation)
+        robot_facing_face, supporting_face = tf.calculate_object_faces(object_to_robot_translation)
 
-    grasping_type_learning_data['facing_robot_face'] = facing_robot_faces
-    grasping_type_learning_data['bottom_face'] = bottom_faces
+        grasping_action['facing_robot_face'] = robot_facing_face
+        grasping_action['bottom_face'] = supporting_face
 
-    grasping_type_learning_data.drop(['result'], axis=1, inplace=True)
-    grasping_type_learning_data = grasping_type_learning_data.dropna(axis=0, subset=['grasp'])
+        grasping_type_learning_data = grasping_type_learning_data.append(grasping_action[['grasp', 'object_type', 'success', 'bottom_face', 'facing_robot_face']])
+
+
+    # grasping_type_learning_data = grasping_tasks[['grasp', 'result', 'object_type', 'success']]
+    # grasping_type_learning_data = grasping_type_learning_data.dropna(axis=0, subset=['result'])
+    # facing_robot_faces = []
+    # bottom_faces = []
+    #
+    # for value in grasping_type_learning_data['result']:
+    #     stripped_value = value.strip()
+    #     facing_robot_face, bottom_face = stripped_value.split()
+    #
+    #     facing_robot_faces.append(facing_robot_face)
+    #     bottom_faces.append(bottom_face)
+    #
+    # grasping_type_learning_data['facing_robot_face'] = facing_robot_faces
+    # grasping_type_learning_data['bottom_face'] = bottom_faces
+    #
+    # grasping_type_learning_data.drop(['result'], axis=1, inplace=True)
+    # grasping_type_learning_data = grasping_type_learning_data.dropna(axis=0, subset=['grasp'])
 
     return grasping_type_learning_data
 
