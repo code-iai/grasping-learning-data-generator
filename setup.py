@@ -21,7 +21,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="grasping_learning_data_generator",
-    version="2.0.0",
+    version="2.1.0",
     author="Sebastian Koralewski",
     author_email="seba@cs.uni-bremen.de",
     description="Generates learning data for grasping data from NEEMs",

@@ -62,14 +62,18 @@ def get_grasping_position_learning_data(neem_path):
 
     grasping_tasks = pd.merge(narrative, object_faces_queries, left_on='id', right_on='action_id')
     grasping_poses = pd.merge(poses_tasks, object_faces_queries, left_on='reasoning_task_id', right_on='id')
-    picking_up_ids = grasping_tasks.get('id_x')
+    picking_up_ids = grasping_tasks.get('id_x').unique()
 
     grasping_position_learning_data = pd.DataFrame()
 
     for picking_up_id in picking_up_ids:
-        grasping_action = narrative.loc[
-            (narrative['parent'] == picking_up_id) & (narrative['type'] == 'AcquireGraspOfSomething')]
-        grasping_action = grasping_action[['grasp', 'object_type', 'success', 'failure', 'arm']]
+        if picking_up_id.startswith('MovingToOperate'):
+            grasping_action = narrative.loc[(narrative['id'] == picking_up_id)]
+            grasping_action = grasping_action[['object_type', 'success', 'failure', 'arm']]
+            grasping_action['grasp'] = ['FRONT']
+        else:
+            grasping_action = narrative.loc[(narrative['parent'] == picking_up_id) & (narrative['type'] == 'AcquireGraspOfSomething')]
+            grasping_action = grasping_action[['grasp', 'object_type', 'success', 'failure', 'arm']]
 
         grasping_pose_features = grasping_poses.loc[(grasping_poses['action_id'] == picking_up_id)]
         robot_to_object_translation = grasping_pose_features[['t_x', 't_y', 't_z']].iloc[0].tolist()
