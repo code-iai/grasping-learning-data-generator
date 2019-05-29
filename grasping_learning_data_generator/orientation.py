@@ -61,7 +61,7 @@ def get_grasping_type_learning_data(neem_path):
 
     grasping_tasks = pd.merge(narrative, object_faces_queries, left_on='id', right_on='action_id')
     grasping_poses = pd.merge(poses_tasks, object_faces_queries, left_on='reasoning_task_id', right_on='id')
-    picking_up_ids = grasping_tasks.get('id_x')
+    picking_up_ids = grasping_tasks.get('id_x').unique()
 
     grasping_type_learning_data = pd.DataFrame()
     for picking_up_id in picking_up_ids:
