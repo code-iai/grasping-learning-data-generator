@@ -3,7 +3,7 @@ from os import listdir
 from os.path import join
 import pandas as pd
 import transformations as tf
-import cram2wordnet
+import cram2wordnet.cram2wordnet as cram2wordnet
 
 
 def generate_learning_data_from_neems(neems_path, result_dir_path):
@@ -12,7 +12,7 @@ def generate_learning_data_from_neems(neems_path, result_dir_path):
 
     for object_type in object_types:
         csv_data_frame = all_csv_data_frame.loc[all_csv_data_frame['object_type'] == object_type]
-        object_type = cram2wordnet.get_word_net_object(object_type)
+        object_type = cram2wordnet.map_cram_object_type_to_word_net_instance(object_type)
 
         for grasping_type in csv_data_frame['grasp'].unique():
             for arm in csv_data_frame['arm'].unique():

@@ -21,14 +21,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="grasping_learning_data_generator",
-    version="2.1.0",
+    version="2.1.1",
     author="Sebastian Koralewski",
     author_email="seba@cs.uni-bremen.de",
     description="Generates learning data for grasping data from NEEMs",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/code-iai/grasping-learning-data-generator",
-    install_requires=['high-level-markov-logic-network==1.0.1','pandas==0.22.0'],
+    install_requires=['high-level-markov-logic-network==1.0.1','pandas==0.22.0', 'cram2wordnet==1.0.1'],
     packages=setuptools.find_packages(exclude=("test",)),
     include_package_data=True,
     classifiers=[

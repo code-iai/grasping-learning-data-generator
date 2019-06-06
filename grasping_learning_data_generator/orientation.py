@@ -5,7 +5,7 @@ from os.path import join
 import pandas as pd
 from high_level_markov_logic_network.fuzzy_markov_logic_network.is_a_generator import get_is_a_ground_atom
 from high_level_markov_logic_network.ground_atom import GroundAtom
-import cram2wordnet
+import cram2wordnet.cram2wordnet as cram2wordnet
 import transformations as tf
 
 __FACING_ROBOT_FACE__ = 'facing_robot_face'
@@ -90,7 +90,7 @@ def get_grasping_type_learning_data(neem_path):
 
 
 def transform_grasping_type_data_point_into_mln_database(data_point):
-    word_net_concept = cram2wordnet.get_word_net_object(data_point['object_type'], 'object.n.01')
+    word_net_concept = cram2wordnet.map_cram_object_type_to_word_net_instance(data_point['object_type'])
 
     grasp_type_ground_atom = GroundAtom(__GRASP_TYPE__, [data_point['grasp']], float(data_point['success']))
     object_to_be_grasped_ground_atom = GroundAtom(__OBJ_TO_BE_GRASPED__, [word_net_concept])
