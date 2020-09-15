@@ -17,10 +17,8 @@ __GRASP_TYPE__ = 'grasp_type'
 
 
 def generate_learning_data_from_neems(neems_path, result_dir_path):
-    for experiment_file in listdir(neems_path):
-        experiment_path = join(neems_path, experiment_file)
-        transform_neem_to_mln_databases(experiment_path, result_dir_path)
-
+    experiment_paths = [join(neems_path, experiment_file) for experiment_file in listdir(neems_path)]
+    [transform_neem_to_mln_databases(path, result_dir_path) for path in experiment_paths]
 
 def transform_neem_to_mln_databases(neem_path, result_path):
     all_grasping_type_learning_data = get_grasping_type_learning_data(neem_path)
