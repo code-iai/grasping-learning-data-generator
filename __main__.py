@@ -11,6 +11,6 @@ if __name__ == "__main__":
 
     if isdir(path):
         generate_position_data(path, result_dir_path)
-        generate_orientation_data(path, result_dir_path)
+        #generate_orientation_data(path, result_dir_path)
     else:
         print 'A directory we the stored information is required'
