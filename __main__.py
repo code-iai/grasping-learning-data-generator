@@ -1,7 +1,7 @@
 import sys
 from os.path import isdir
 
-from grasping_learning_data_generator.orientation import generate_learning_data_from_neems as generate_orientation_data
+#from grasping_learning_data_generator.orientation import generate_learning_data_from_neems as generate_orientation_data
 from grasping_learning_data_generator.position import generate_learning_data_from_neems as generate_position_data
 
 if __name__ == "__main__":
