@@ -26,7 +26,7 @@ def get_learning_data_from_neems(neems_path):
         placing_data_frame = placing_data_frame.append(new_placing_data)
         environment_data_frame = environment_data_frame.append(new_environment_data)
 
-    return {'grasping': grasping_data_frame, 'placing': placing_data_frame, 'environment': environment_data_frame}
+    return {'balea': grasping_data_frame, 'dish': placing_data_frame.sort_values(["t_x"])}
 
 
 def get_position_learning_data(neem_path):
@@ -37,10 +37,14 @@ def get_position_learning_data(neem_path):
     poses_tasks = pd.read_csv(poses_path, sep=';')
 
     relevant_poses = pd.merge(narrative, poses_tasks, left_on='id', right_on='action_task_id')
+    perceiving_actions = relevant_poses[relevant_poses['type'] != "LookingFor"]
+    perceiving_actions = perceiving_actions[perceiving_actions['object_acted_on'].notna() | ((perceiving_actions['type'] == 'Grasping') & (perceiving_actions['success'] == False))]
+    #perceiving_actions = perceiving_actions[perceiving_actions['success'] == True]
+
     environment_poses = relevant_poses[relevant_poses['information'].notna()]
-    relevant_poses = relevant_poses[relevant_poses['arm'].notna()]
-    grasping_poses = relevant_poses[relevant_poses['type'] == 'Grasping']
-    placing_poses = relevant_poses[relevant_poses['type'] == 'Placing']
+    grasping_poses = perceiving_actions[perceiving_actions['object_acted_on'] == 'balea_bottle_0']
+    #grasping_poses = grasping_poses[grasping_poses['bodyPartsUsed'].notna()]
+    placing_poses = perceiving_actions[(perceiving_actions['object_acted_on'] == 'dish_washer_tabs_0') | ((perceiving_actions['type'] == 'Grasping') & (perceiving_actions['success'] == False)) ]
     #x_poses = list(grasping_poses.t_x)
     #y_poses = list(grasping_poses.t_y)
     # successes = set(grasping_poses.success)
